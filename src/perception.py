@@ -1,19 +1,20 @@
 '''
 @author:        Sifan Jiang
 email:          sifanj@kth.se
-Date:           2019/9/10   
+Date:           2019/9/10
 
 Color Convention that we follow:
----------------- 
-    0-  YELLOW
-    1-  BLUE
-    2-  ORANGE
-    3-  WHITE
-    4-  BLACK
+0 - YELLOW
+1 - BLUE
+2 - ORANGE
+3 - WHITE
+4 - BLACK
 '''
 
 import numpy as np
 from cv2 import cv2
+
+TESTMODE = True
 
 def main():
     cap = cv2.VideoCapture('./Videos/Video_1.mp4')
@@ -21,53 +22,42 @@ def main():
     fps = int(cap.get(cv2.CAP_PROP_FPS))
     count = 0
 
-    bounding_box = []
-    labels = []
-    # bounding_box.append(np.array((100,100,200,100)))
-    # labels.append(0)
+    lowerY = np.array([0, 0, 0])
+    upperY = np.array([0, 255, 255])
 
-    # Read every frame till the end of video
+    lowerB = np.array([120, 0, 0])
+    upperB = np.array([255, 0, 0])
+
+    lowerO = np.array([0, 135, 135])
+    upperO = np.array([15, 255, 255])
+    
     while count < frameCount:
         ret, frame = cap.read()
-        if ret == True:
+        bounding_box = []
+        labels = []
+
+        if ret:
             count += 1
             frame_cloned = np.copy(frame)
-            '''
-            #
-            #
-            #
-            #
 
-            Your algorithm to process frame comes here
-            The result may be:
-            - a list of bounding_boxes (format corresponding to cv2.rectangle) and 
-            - a list of labels (integer for simplicity)
+            ##### Test
+            frame_hsv = cv2.cvtColor(frame_cloned, cv2.COLOR_BGR2HSV)
+            frame_yellow = cv2.inRange(frame_hsv, lowerY, upperY)
+            frame_blue = cv2.inRange(frame_hsv, lowerB, upperB)
+            frame_orange = cv2.inRange(frame_hsv, lowerO, upperO)
+            #####
 
-            feel free to choose any other formulation of results
-            #
-            # 
-            #
-            # 
-            '''
+            # Process cloned frame
+            bounding_box.append(np.array((100,100,200,100)))
+            labels.append(1)
+
+            # Plot the bounding boxes
             for box, i in zip(bounding_box, range(len(bounding_box))):
-                '''
-                A quick note. A bounding box can have two formulations:
-                1. xmin, ymin, w, h : which means first two numbers signify 
-                the top left coordinate of rectangle and last two signify 
-                its width and height respectively
-                
-                2. xmin, ymin, xmax, ymax : the first two coordinates signify
-                the top left coordinate and last two coordinates signify the
-                bottom right coordinate of rectangle.
-
-                In our example, we use formulation 2, but its easy to interchange.
-                follow comments.
-                '''
                 xmin = box[0]
                 ymin = box[1]
                 # xmax = box[2]
-                w = box[2]
                 # ymax = box[3]
+                w = box[2]
                 h = box[3]
 
                 if labels[i] == 0:
@@ -87,6 +77,16 @@ def main():
             cv2.waitKey(10)
             cv2.imshow('Result of cone detection', frame_cloned)
             cv2.waitKey(10)
+
+            if TESTMODE:
+                cv2.imshow('HSV frame', frame_hsv)
+                cv2.waitKey(10)
+                cv2.imshow('Yellow frame', frame_yellow)
+                cv2.waitKey(10)
+                cv2.imshow('Blue frame', frame_blue)
+                cv2.waitKey(10)
+                cv2.imshow('Orange frame', frame_orange)
+                cv2.waitKey(10)
 
 
 if __name__ == '__main__':
