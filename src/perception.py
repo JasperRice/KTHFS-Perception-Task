@@ -12,24 +12,29 @@ Color Convention that we follow:
 '''
 
 import numpy as np
-from cv2 import cv2
+import cv2
+# from cv2 import cv2
 
 TESTMODE = True
 
 def main():
-    cap = cv2.VideoCapture('./Videos/Video_1.mp4')
+    cap = cv2.VideoCapture('./Videos/Video_2.mp4')
     frameCount = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     fps = int(cap.get(cv2.CAP_PROP_FPS))
     count = 0
 
-    lower__hsv_yellow = np.array([0, 0, 0])
-    upper_hsv_yellow = np.array([0, 255, 255])
+    # hsv_yellow = np.array([30, 255, 255])
+    lower_hsv_yellow = np.array([20, 63, 100])
+    upper_hsv_yellow = np.array([40, 255, 255])
 
-    lower_hsv_blue = np.array([120, 0, 0])
-    upper_hsv_blue = np.array([255, 0, 0])
+    # hsv_blue = np.array([120, 255, 255])
+    lower_hsv_blue = np.array([110, 63, 100])
+    upper_hsv_blue = np.array([130, 255, 255])
 
-    lower_hsv_orange = np.array([0, 135, 135])
-    upper_hsv_orange = np.array([15, 255, 255])
+    # hsv_orange = np.array([19, 255, 255])
+    # hsv_red = np.array([0, 255, 255])
+    lower_hsv_orange = np.array([0, 63, 100])
+    upper_hsv_orange = np.array([20, 255, 255])
 
     while count < frameCount:
         ret, frame = cap.read()
@@ -42,9 +47,9 @@ def main():
 
             ##### Test
             frame_hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-            frame_yellow = cv2.inRange(frame_hsv, lowerY, upperY)
-            frame_blue = cv2.inRange(frame_hsv, lowerB, upperB)
-            frame_orange = cv2.inRange(frame_hsv, lowerO, upperO)
+            frame_yellow = cv2.inRange(frame_hsv, lower_hsv_yellow, upper_hsv_yellow)
+            frame_blue = cv2.inRange(frame_hsv, lower_hsv_blue, upper_hsv_blue)
+            frame_orange = cv2.inRange(frame_hsv, lower_hsv_orange, upper_hsv_orange)
             #####
 
             # Process cloned frame
@@ -75,18 +80,19 @@ def main():
 
             cv2.imshow('Original frame', frame)
             cv2.waitKey(10)
-            cv2.imshow('Result of cone detection', frame_cloned)
-            cv2.waitKey(10)
+            # cv2.imshow('Result of cone detection', frame_cloned)
+            # cv2.waitKey(10)
 
             if TESTMODE:
+                pass
                 # cv2.imshow('HSV frame', frame_hsv)
                 # cv2.waitKey(10)
                 cv2.imshow('Yellow frame', frame_yellow)
                 cv2.waitKey(10)
-                # cv2.imshow('Blue frame', frame_blue)
-                # cv2.waitKey(10)
-                # cv2.imshow('Orange frame', frame_orange)
-                # cv2.waitKey(10)
+                cv2.imshow('Blue frame', frame_blue)
+                cv2.waitKey(10)
+                cv2.imshow('Orange frame', frame_orange)
+                cv2.waitKey(10)
 
 
 if __name__ == '__main__':
