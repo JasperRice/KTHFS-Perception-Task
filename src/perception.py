@@ -23,8 +23,6 @@ def main():
     fps = int(cap.get(cv2.CAP_PROP_FPS))
     count = 0
 
-    kernel = np.ones((5,5), np.uint8)
-
     # hsv_yellow = np.array([30, 255, 255])
     lower_hsv_yellow = np.array([18, 63, 63])
     upper_hsv_yellow = np.array([35, 255, 255])
@@ -48,6 +46,7 @@ def main():
     lower_black = np.array([0, 0, 0])
     upper_black = np.array([179, 255, 15])
 
+
     while count < frameCount:
         ret, frame = cap.read()
         bounding_box = []
@@ -61,7 +60,7 @@ def main():
             frame_hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
             # Color segmentation
-            # frame_yellow_cones = cv2.add(cv2.inRange(frame_hsv, lower_hsv_yellow, upper_hsv_yellow)
+            # frame_yellow = cv2.add(cv2.inRange(frame_hsv, lower_hsv_yellow, upper_hsv_yellow)
             #                              , cv2.inRange(frame_hsv, lower_black, upper_black))
             # frame_blue_cones = cv2.add(cv2.inRange(frame_hsv, lower_hsv_blue, upper_hsv_blue)
             #                            , cv2.inRange(frame_hsv, lower_white, upper_white))
@@ -69,20 +68,46 @@ def main():
             #                                      , cv2.inRange(frame_hsv, lower_hsv_orange_b, upper_hsv_orange_b))
             #                              , cv2.inRange(frame_hsv, lower_white, upper_white))
 
-            frame_yellow_cones = cv2.inRange(frame_hsv, lower_hsv_yellow, upper_hsv_yellow)
+            frame_yellow = cv2.inRange(frame_hsv, lower_hsv_yellow, upper_hsv_yellow)
             frame_blue_cones = cv2.inRange(frame_hsv, lower_hsv_blue, upper_hsv_blue)
             frame_orange_cones = cv2.add(cv2.inRange(frame_hsv, lower_hsv_orange_a, upper_hsv_orange_a)
                                                  , cv2.inRange(frame_hsv, lower_hsv_orange_b, upper_hsv_orange_b))
 
             # Erosion and dilation
-            OPENING = False
+            kernel = np.ones((5,5), np.uint8)
+            OPENING = True
             if OPENING:
-                frame_yellow_cones = cv2.morphologyEx(frame_yellow_cones, cv2.MORPH_OPEN, kernel)
+                frame_yellow = cv2.morphologyEx(frame_yellow, cv2.MORPH_OPEN, kernel)
             else:
-                frame_yellow_cones = cv2.erode(frame_yellow_cones, kernel, iterations=1)
-                frame_yellow_cones = cv2.dilate(frame_yellow_cones, kernel, iterations=1)
+                frame_yellow = cv2.erode(frame_yellow, kernel, iterations=2)
+                frame_yellow = cv2.dilate(frame_yellow, kernel, iterations=2)
+
+            frame_yellow = cv2.dilate(frame_yellow, kernel, iterations=5)
+            frame_yellow = cv2.erode(frame_yellow, kernel, iterations=5)
 
             # Gaussian
+            # frame_yellow = cv2.medianBlur(frame_yellow, 5)
+            frame_yellow = cv2.GaussianBlur(frame_yellow, (5,5), 0)
+
+            # Edge detection
+            frame_yellow = cv2.Canny(frame_yellow, 100, 200)
+
+            # Contour approximation
+            _, contour_yellow, _ = cv2.findContours(np.array(frame_yellow), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            approx_contour_yellow = []
+            for c in contour_yellow:
+                approx_contour_yellow.append(cv2.approxPolyDP(c, 10, closed=True))
+
+            frame_yellow = np.zeros_like(frame_yellow)
+            cv2.drawContours(frame_yellow, approx_contour_yellow, -1, (255, 255, 255), 1)
+
+
+            # ret_yellow, thresh_yellow = cv2.threshold(frame_yellow, 127, 255, 0)
+            # contours_yellow, hierarchy_yellow = cv2.findContours(thresh_yellow, 1, 2)
+            # cnt_yellow = contours_yellow[0]
+            # area_yellow = cv2.contourArea(cnt_yellow)
+            # epsilon_yellow = 0.1 * cv2.arcLength(cnt_yellow, True)
+            # approx_yellow = cv2.approxPolyDP(cnt_yellow, epsilon_yellow, True)
 
 
 
@@ -116,7 +141,7 @@ def main():
             if TESTMODE:
                 # cv2.imshow('HSV frame', frame_hsv)
                 # cv2.waitKey(10)
-                cv2.imshow('Yellow cones', frame_yellow_cones)
+                cv2.imshow('Yellow cones', frame_yellow)
                 cv2.waitKey(10)
                 # cv2.imshow('Blue cones', frame_blue_cones)
                 # cv2.waitKey(10)

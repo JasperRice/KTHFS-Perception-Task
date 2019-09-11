@@ -1,9 +1,10 @@
 import numpy as np
-from cv2 import cv2
+import cv2  # Ubuntu
+# from cv2 import cv2   # Windows
 
 
 #_____imgOriginal
-imgOriginal = cv2.imread('./Figues/Figure_2.png')
+imgOriginal = cv2.imread('./Backups/template_orange.png')
 
 #_____imgHSV
 imgHSV = cv2.cvtColor(imgOriginal, cv2.COLOR_BGR2HSV)
