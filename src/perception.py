@@ -24,12 +24,12 @@ def main():
     count = 0
 
     # hsv_yellow = np.array([30, 255, 255])
-    lower_hsv_yellow = np.array([20, 63, 100])
+    lower_hsv_yellow = np.array([18, 63, 63])
     upper_hsv_yellow = np.array([40, 255, 255])
 
     # hsv_blue = np.array([120, 255, 255])
-    lower_hsv_blue = np.array([110, 63, 100])
-    upper_hsv_blue = np.array([130, 255, 255])
+    lower_hsv_blue = np.array([109, 31, 63])
+    upper_hsv_blue = np.array([135, 255, 255])
 
     # hsv_orange = np.array([19, 255, 255])
     # hsv_red = np.array([0, 255, 255])
@@ -84,15 +84,14 @@ def main():
             # cv2.waitKey(10)
 
             if TESTMODE:
-                pass
                 # cv2.imshow('HSV frame', frame_hsv)
                 # cv2.waitKey(10)
-                cv2.imshow('Yellow frame', frame_yellow)
-                cv2.waitKey(10)
+                # cv2.imshow('Yellow frame', frame_yellow)
+                # cv2.waitKey(10)
                 cv2.imshow('Blue frame', frame_blue)
                 cv2.waitKey(10)
-                cv2.imshow('Orange frame', frame_orange)
-                cv2.waitKey(10)
+                # cv2.imshow('Orange frame', frame_orange)
+                # cv2.waitKey(10)
 
 
 if __name__ == '__main__':
