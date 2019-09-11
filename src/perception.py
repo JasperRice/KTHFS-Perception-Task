@@ -12,8 +12,8 @@ Color Convention that we follow:
 '''
 
 import numpy as np
-import cv2
-# from cv2 import cv2
+import cv2  # Ubuntu
+# from cv2 import cv2   # Windows
 
 TESTMODE = True
 
@@ -23,18 +23,30 @@ def main():
     fps = int(cap.get(cv2.CAP_PROP_FPS))
     count = 0
 
+    kernel = np.ones((5,5), np.uint8)
+
     # hsv_yellow = np.array([30, 255, 255])
     lower_hsv_yellow = np.array([18, 63, 63])
-    upper_hsv_yellow = np.array([40, 255, 255])
+    upper_hsv_yellow = np.array([35, 255, 255])
 
     # hsv_blue = np.array([120, 255, 255])
-    lower_hsv_blue = np.array([109, 31, 63])
-    upper_hsv_blue = np.array([130, 255, 255])
+    lower_hsv_blue = np.array([109, 31, 31])
+    upper_hsv_blue = np.array([140, 255, 255])
 
-    # hsv_orange = np.array([19, 255, 255])
+    # hsv_orange = np.array([19, 255, 255])MORPH_OPEN
     # hsv_red = np.array([0, 255, 255])
-    lower_hsv_orange = np.array([0, 63, 100])
-    upper_hsv_orange = np.array([20, 255, 255])
+    lower_hsv_orange_a = np.array([0, 63, 100])
+    upper_hsv_orange_a = np.array([15, 255, 255])
+
+    lower_hsv_orange_b = np.array([159, 63, 63])
+    upper_hsv_orange_b = np.array([179, 255, 255])
+
+    # White
+    lower_white = np.array([0, 0, 0])
+    upper_white = np.array([179, 15, 255])
+    # Black
+    lower_black = np.array([0, 0, 0])
+    upper_black = np.array([179, 255, 15])
 
     while count < frameCount:
         ret, frame = cap.read()
@@ -45,16 +57,34 @@ def main():
             count += 1
             frame_cloned = np.copy(frame)
 
-            ##### Test
+            # Covert BGR to HSV
             frame_hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-            frame_yellow = cv2.inRange(frame_hsv, lower_hsv_yellow, upper_hsv_yellow)
-            frame_blue = cv2.inRange(frame_hsv, lower_hsv_blue, upper_hsv_blue)
-            frame_orange = cv2.inRange(frame_hsv, lower_hsv_orange, upper_hsv_orange)
-            #####
 
-            # Process cloned frame
-            # bounding_box.append(np.array((100,100,200,100)))
-            # labels.append(1)
+            # Color segmentation
+            # frame_yellow_cones = cv2.add(cv2.inRange(frame_hsv, lower_hsv_yellow, upper_hsv_yellow)
+            #                              , cv2.inRange(frame_hsv, lower_black, upper_black))
+            # frame_blue_cones = cv2.add(cv2.inRange(frame_hsv, lower_hsv_blue, upper_hsv_blue)
+            #                            , cv2.inRange(frame_hsv, lower_white, upper_white))
+            # frame_orange_cones = cv2.add(cv2.add(cv2.inRange(frame_hsv, lower_hsv_orange_a, upper_hsv_orange_a)
+            #                                      , cv2.inRange(frame_hsv, lower_hsv_orange_b, upper_hsv_orange_b))
+            #                              , cv2.inRange(frame_hsv, lower_white, upper_white))
+
+            frame_yellow_cones = cv2.inRange(frame_hsv, lower_hsv_yellow, upper_hsv_yellow)
+            frame_blue_cones = cv2.inRange(frame_hsv, lower_hsv_blue, upper_hsv_blue)
+            frame_orange_cones = cv2.add(cv2.inRange(frame_hsv, lower_hsv_orange_a, upper_hsv_orange_a)
+                                                 , cv2.inRange(frame_hsv, lower_hsv_orange_b, upper_hsv_orange_b))
+
+            # Erosion and dilation
+            OPENING = False
+            if OPENING:
+                frame_yellow_cones = cv2.morphologyEx(frame_yellow_cones, cv2.MORPH_OPEN, kernel)
+            else:
+                frame_yellow_cones = cv2.erode(frame_yellow_cones, kernel, iterations=1)
+                frame_yellow_cones = cv2.dilate(frame_yellow_cones, kernel, iterations=1)
+
+            # Gaussian
+
+
 
             # Plot the bounding boxes
             for box, i in zip(bounding_box, range(len(bounding_box))):
@@ -86,11 +116,11 @@ def main():
             if TESTMODE:
                 # cv2.imshow('HSV frame', frame_hsv)
                 # cv2.waitKey(10)
-                cv2.imshow('Yellow frame', frame_yellow)
+                cv2.imshow('Yellow cones', frame_yellow_cones)
                 cv2.waitKey(10)
-                cv2.imshow('Blue frame', frame_blue)
-                cv2.waitKey(10)
-                # cv2.imshow('Orange frame', frame_orange)
+                # cv2.imshow('Blue cones', frame_blue_cones)
+                # cv2.waitKey(10)
+                # cv2.imshow('Orange cones', frame_orange_cones)
                 # cv2.waitKey(10)
 
 
