@@ -18,7 +18,7 @@ import cv2
 TESTMODE = True
 
 def main():
-    cap = cv2.VideoCapture('./Videos/Video_2.mp4')
+    cap = cv2.VideoCapture('./Videos/Video_3.mp4')
     frameCount = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     fps = int(cap.get(cv2.CAP_PROP_FPS))
     count = 0
@@ -29,7 +29,7 @@ def main():
 
     # hsv_blue = np.array([120, 255, 255])
     lower_hsv_blue = np.array([109, 31, 63])
-    upper_hsv_blue = np.array([135, 255, 255])
+    upper_hsv_blue = np.array([130, 255, 255])
 
     # hsv_orange = np.array([19, 255, 255])
     # hsv_red = np.array([0, 255, 255])
@@ -86,8 +86,8 @@ def main():
             if TESTMODE:
                 # cv2.imshow('HSV frame', frame_hsv)
                 # cv2.waitKey(10)
-                # cv2.imshow('Yellow frame', frame_yellow)
-                # cv2.waitKey(10)
+                cv2.imshow('Yellow frame', frame_yellow)
+                cv2.waitKey(10)
                 cv2.imshow('Blue frame', frame_blue)
                 cv2.waitKey(10)
                 # cv2.imshow('Orange frame', frame_orange)
