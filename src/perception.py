@@ -16,42 +16,50 @@ import cv2  # Ubuntu
 # from cv2 import cv2   # Windows
 
 ADD = True
+ARCAREA = True
 ARCLENGTH = True
 OPENING = True
 TESTMODE = True
 
-def main():
-    # global ADD, ARCLENGTH, OPENING, TESTMODE
+LOWER_CORNER = 3
+UPPER_CORNER = 8
+LOWER_ARCAREA = 500
+UPPER_ARCAREA = 2500
+LOWER_ARCLENGTH = 100
+UPPER_ARCLENGTH = 250
 
+KERNEL_3x3 = np.ones((3,3), np.uint8)
+KERNEL_5x5 = np.ones((5,5), np.uint8)
+
+
+def main():
     cap = cv2.VideoCapture('./Videos/Video_3.mp4')
     frameCount = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     fps = int(cap.get(cv2.CAP_PROP_FPS))
     count = 0
 
-    # hsv_yellow = np.array([30, 255, 255])
+    """ Yellow """
     lower_hsv_yellow = np.array([18, 63, 63])
     upper_hsv_yellow = np.array([35, 255, 255])
 
-    # hsv_blue = np.array([120, 255, 255])
+    """ Blue """
     lower_hsv_blue = np.array([109, 31, 31])
     upper_hsv_blue = np.array([140, 255, 255])
 
-    # hsv_orange = np.array([19, 255, 255])
-    # hsv_red = np.array([0, 255, 255])
+    """ Orange """
     lower_hsv_orange_a = np.array([0, 63, 100])
     upper_hsv_orange_a = np.array([15, 255, 255])
 
     lower_hsv_orange_b = np.array([159, 63, 63])
     upper_hsv_orange_b = np.array([179, 255, 255])
 
-    # White
+    """ White """
     lower_hsv_white = np.array([0, 0, 0])
     upper_hsv_white = np.array([179, 31, 255])
 
-    # Black
+    """ Black """
     lower_hsv_black = np.array([0, 0, 0])
     upper_hsv_black = np.array([179, 255, 63])
-
 
     while count < frameCount:
         ret, frame = cap.read()
@@ -61,6 +69,8 @@ def main():
         if ret:
             count += 1
             frame_cloned = np.copy(frame)
+
+            """ Convert BGR to HSV """
             frame_hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
             """ Color segmentation """
@@ -102,12 +112,12 @@ def main():
                 frame_orange = cv2.erode(frame_orange, kernel, iterations=5)
 
             """ Smoothness """
-            # frame_yellow = cv2.medianBlur(frame_yellow, 5)
             frame_yellow = cv2.GaussianBlur(frame_yellow, (5,5), 0)
-            frame_yellow_smoothed = np.copy(frame_yellow)
+            # frame_yellow_smooth = np.copy(frame_yellow)
 
             """ Edge detection """
             frame_yellow = cv2.Canny(frame_yellow, 100, 200)
+            # frame_yellow_edge = np.copy(frame_yellow)
 
             """ Contour approximation """
             _, contour_yellow, _ = cv2.findContours(np.array(frame_yellow), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -119,15 +129,23 @@ def main():
 
             """ Convex hull """
             convex_hull_yellow = []
-            if ARCLENGTH:
-                for ac in approx_contour_yellow:
-                    ch = cv2.convexHull(ac)
-                    if (3 <= len(ch) <= 8) and (125 <= cv2.arcLength(ch, True) <= 250):
+            for ac in approx_contour_yellow:
+                ch = cv2.convexHull(ac)
+                if ARCAREA and ARCLENGTH:
+                    if ((LOWER_CORNER <= len(ch) <= UPPER_CORNER)
+                        and (LOWER_ARCAREA <= cv2.contourArea(ch) <= UPPER_ARCAREA)
+                        and (LOWER_ARCLENGTH <= cv2.arcLength(ch, True) <= UPPER_ARCLENGTH)):
                         convex_hull_yellow.append(ch)
-            else:
-                for ac in approx_contour_yellow:
-                    ch = cv2.convexHull(ac)
-                    if 3 <= len(ch) <= 8:
+                elif ARCAREA and (not ARCLENGTH):
+                    if ((LOWER_CORNER <= len(ch) <= UPPER_CORNER)
+                        and (LOWER_ARCAREA <= cv2.contourArea(ch) <= UPPER_ARCAREA)):
+                        convex_hull_yellow.append(ch)
+                elif (not ARCAREA) and ARCLENGTH:
+                    if ((LOWER_CORNER <= len(ch) <= UPPER_CORNER)
+                        and (LOWER_ARCLENGTH <= cv2.arcLength(ch, True) <= UPPER_ARCLENGTH)):
+                        convex_hull_yellow.append(ch)
+                else:
+                    if (LOWER_CORNER <= len(ch) <= UPPER_CORNER):
                         convex_hull_yellow.append(ch)
 
             frame_yellow = np.zeros_like(frame_yellow)
@@ -137,33 +155,26 @@ def main():
             for box, i in zip(bounding_box, range(len(bounding_box))):
                 xmin = box[0]
                 ymin = box[1]
-                xmax = box[2]
-                ymax = box[3]
-                # w = box[2]
-                # h = box[3]
+                # xmax = box[2]
+                # ymax = box[3]
+                w = box[2]
+                h = box[3]
 
                 if labels[i] == 0:
-                    cv2.rectangle(frame_cloned ,(xmin,ymin), (xmax,ymax), (0,255,255), 5)
-                    # cv2.rectangle(frame_cloned, (xmin,ymin), (xmin+w,ymin+h), (0,255,255), 5)
+                    # cv2.rectangle(frame_cloned ,(xmin,ymin), (xmax,ymax), (0,255,255), 5)
+                    cv2.rectangle(frame_cloned, (xmin,ymin), (xmin+w,ymin+h), (0,255,255), 5)
                     cv2.putText(frame_cloned, 'Y', (int(xmin),int(ymin)-10), cv2.FONT_HERSHEY_COMPLEX, 1, (0, 0, 0), 2, cv2.LINE_AA)
                 if labels[i] == 1:
-                    cv2.rectangle(frame_cloned ,(xmin,ymin), (xmax,ymax), (255,0,0), 5)
-                    # cv2.rectangle(frame_cloned, (xmin,ymin), (xmin+w,ymin+h), (255,0,0), 5)
+                    # cv2.rectangle(frame_cloned ,(xmin,ymin), (xmax,ymax), (255,0,0), 5)
+                    cv2.rectangle(frame_cloned, (xmin,ymin), (xmin+w,ymin+h), (255,0,0), 5)
                     cv2.putText(frame_cloned, 'B', (int(xmin),int(ymin)-10), cv2.FONT_HERSHEY_COMPLEX, 1, (0, 0, 0), 2, cv2.LINE_AA)
                 if labels[i] == 2:
-                    cv2.rectangle(frame_cloned ,(xmin,ymin), (xmax,ymax), (0,165,255), 5)
-                    # cv2.rectangle(frame_cloned ,(xmin,ymin), (xmin+w,ymin+h), (0,165,255), 5)
+                    # cv2.rectangle(frame_cloned ,(xmin,ymin), (xmax,ymax), (0,165,255), 5)
+                    cv2.rectangle(frame_cloned ,(xmin,ymin), (xmin+w,ymin+h), (0,165,255), 5)
                     cv2.putText(frame_cloned, 'O', (int(xmin),int(ymin)-10), cv2.FONT_HERSHEY_COMPLEX, 1, (0, 0, 0), 2, cv2.LINE_AA)
-
-            # cv2.imshow('Original frame', frame)
-            # cv2.waitKey(10)
-            # cv2.imshow('Result of cone detection', frame_cloned)
-            # cv2.waitKey(10)
 
             if TESTMODE:
                 # cv2.imshow('HSV frame', frame_hsv)
-                # cv2.waitKey(10)
-                # cv2.imshow('Yellow smoothed', frame_yellow_smoothed)
                 # cv2.waitKey(10)
                 cv2.imshow('Yellow cones', frame_yellow)
                 cv2.waitKey(10)
@@ -171,6 +182,11 @@ def main():
                 # cv2.waitKey(10)
                 # cv2.imshow('Orange cones', frame_orange)
                 # cv2.waitKey(10)
+            else:
+                cv2.imshow('Original frame', frame)
+                cv2.waitKey(10)
+                cv2.imshow('Result of cone detection', frame_cloned)
+                cv2.waitKey(10)
 
 
 if __name__ == '__main__':
