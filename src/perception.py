@@ -40,11 +40,12 @@ def main():
     upper_hsv_orange_b = np.array([179, 255, 255])
 
     # White
-    lower_white = np.array([0, 0, 0])
-    upper_white = np.array([179, 15, 255])
+    lower_hsv_white = np.array([0, 0, 0])
+    upper_hsv_white = np.array([179, 31, 255])
+
     # Black
-    lower_black = np.array([0, 0, 0])
-    upper_black = np.array([179, 255, 15])
+    lower_hsv_black = np.array([0, 0, 0])
+    upper_hsv_black = np.array([179, 255, 31])
 
 
     while count < frameCount:
@@ -55,45 +56,44 @@ def main():
         if ret:
             count += 1
             frame_cloned = np.copy(frame)
-
-            # Covert BGR to HSV
             frame_hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
-            # Color segmentation
-            # frame_yellow = cv2.add(cv2.inRange(frame_hsv, lower_hsv_yellow, upper_hsv_yellow)
-            #                              , cv2.inRange(frame_hsv, lower_black, upper_black))
-            # frame_blue_cones = cv2.add(cv2.inRange(frame_hsv, lower_hsv_blue, upper_hsv_blue)
-            #                            , cv2.inRange(frame_hsv, lower_white, upper_white))
-            # frame_orange_cones = cv2.add(cv2.add(cv2.inRange(frame_hsv, lower_hsv_orange_a, upper_hsv_orange_a)
-            #                                      , cv2.inRange(frame_hsv, lower_hsv_orange_b, upper_hsv_orange_b))
-            #                              , cv2.inRange(frame_hsv, lower_white, upper_white))
-
+            """ Color segmentation """
             frame_yellow = cv2.inRange(frame_hsv, lower_hsv_yellow, upper_hsv_yellow)
-            frame_blue_cones = cv2.inRange(frame_hsv, lower_hsv_blue, upper_hsv_blue)
-            frame_orange_cones = cv2.add(cv2.inRange(frame_hsv, lower_hsv_orange_a, upper_hsv_orange_a)
-                                                 , cv2.inRange(frame_hsv, lower_hsv_orange_b, upper_hsv_orange_b))
+            frame_blue = cv2.inRange(frame_hsv, lower_hsv_blue, upper_hsv_blue)
+            frame_orange = cv2.add(cv2.inRange(frame_hsv, lower_hsv_orange_a, upper_hsv_orange_a),
+                                   cv2.inRange(frame_hsv, lower_hsv_orange_b, upper_hsv_orange_b))
+            frame_black = cv2.inRange(frame_hsv, lower_hsv_black, upper_hsv_black)
+            frame_white = cv2.inRange(frame_hsv, lower_hsv_white, upper_hsv_white)
 
-            # Erosion and dilation
+            """ Erosion and dilation """
             kernel = np.ones((5,5), np.uint8)
             OPENING = True
             if OPENING:
                 frame_yellow = cv2.morphologyEx(frame_yellow, cv2.MORPH_OPEN, kernel)
+                frame_blue = cv2.morphologyEx(frame_blue, cv2.MORPH_OPEN, kernel)
+                frame_orange = cv2.morphologyEx(frame_orange, cv2.MORPH_OPEN, kernel)
             else:
                 frame_yellow = cv2.erode(frame_yellow, kernel, iterations=2)
                 frame_yellow = cv2.dilate(frame_yellow, kernel, iterations=2)
+                frame_blue = cv2.erode(frame_blue, kernel, iterations=2)
+                frame_blue = cv2.dilate(frame_blue, kernel, iterations=2)
+                frame_orange = cv2.erode(frame_orange, kernel, iterations=2)
+                frame_orange = cv2.dilate(frame_orange, kernel, iterations=2)
 
-            frame_yellow = cv2.dilate(frame_yellow, kernel, iterations=5)
-            frame_yellow = cv2.erode(frame_yellow, kernel, iterations=5)
+            # frame_yellow = cv2.dilate(frame_yellow, kernel, iterations=5)
+            # frame_yellow = cv2.erode(frame_yellow, kernel, iterations=5)
 
-            # Gaussian
+            """ Smoothness """
             # frame_yellow = cv2.medianBlur(frame_yellow, 5)
             frame_yellow = cv2.GaussianBlur(frame_yellow, (5,5), 0)
-
-            # Edge detection
+#
+            """ Edge detection """
             frame_yellow = cv2.Canny(frame_yellow, 100, 200)
 
-            # Contour approximation
-            _, contour_yellow, _ = cv2.findContours(np.array(frame_yellow), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            """ Contour approximation """
+            # _, contour_yellow, _ = cv2.findContours(np.array(frame_yellow), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            _, contour_yellow, _ = cv2.findContours(np.array(frame_yellow), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
             approx_contour_yellow = []
             for c in contour_yellow:
                 approx_contour_yellow.append(cv2.approxPolyDP(c, 10, closed=True))
@@ -111,7 +111,7 @@ def main():
 
 
 
-            # Plot the bounding boxes
+            """ Plot the bounding boxes """
             for box, i in zip(bounding_box, range(len(bounding_box))):
                 xmin = box[0]
                 ymin = box[1]
@@ -143,9 +143,9 @@ def main():
                 # cv2.waitKey(10)
                 cv2.imshow('Yellow cones', frame_yellow)
                 cv2.waitKey(10)
-                # cv2.imshow('Blue cones', frame_blue_cones)
+                # cv2.imshow('Blue cones', frame_blue)
                 # cv2.waitKey(10)
-                # cv2.imshow('Orange cones', frame_orange_cones)
+                # cv2.imshow('Orange cones', frame_orange)
                 # cv2.waitKey(10)
 
 
