@@ -45,7 +45,7 @@ def main():
 
     # Black
     lower_hsv_black = np.array([0, 0, 0])
-    upper_hsv_black = np.array([179, 255, 31])
+    upper_hsv_black = np.array([179, 255, 63])
 
 
     while count < frameCount:
@@ -67,12 +67,14 @@ def main():
             frame_white = cv2.inRange(frame_hsv, lower_hsv_white, upper_hsv_white)
 
             """ Erosion and dilation """
-            kernel = np.ones((5,5), np.uint8)
+            kernel = np.ones((3,3), np.uint8)
             OPENING = True
             if OPENING:
                 frame_yellow = cv2.morphologyEx(frame_yellow, cv2.MORPH_OPEN, kernel)
                 frame_blue = cv2.morphologyEx(frame_blue, cv2.MORPH_OPEN, kernel)
                 frame_orange = cv2.morphologyEx(frame_orange, cv2.MORPH_OPEN, kernel)
+                frame_white = cv2.morphologyEx(frame_white, cv2.MORPH_OPEN, kernel)
+                frame_black = cv2.morphologyEx(frame_black, cv2.MORPH_OPEN, kernel)
             else:
                 frame_yellow = cv2.erode(frame_yellow, kernel, iterations=2)
                 frame_yellow = cv2.dilate(frame_yellow, kernel, iterations=2)
@@ -80,36 +82,33 @@ def main():
                 frame_blue = cv2.dilate(frame_blue, kernel, iterations=2)
                 frame_orange = cv2.erode(frame_orange, kernel, iterations=2)
                 frame_orange = cv2.dilate(frame_orange, kernel, iterations=2)
+                frame_white = cv2.erode(frame_white, kernel, iterations=2)
+                frame_white = cv2.dilate(frame_white, kernel, iterations=2)
+                frame_black = cv2.erode(frame_black, kernel, iterations=2)
+                frame_black = cv2.dilate(frame_black, kernel, iterations=2)
 
             # frame_yellow = cv2.dilate(frame_yellow, kernel, iterations=5)
             # frame_yellow = cv2.erode(frame_yellow, kernel, iterations=5)
+            frame_yellow = cv2.add(frame_yellow, frame_black)
 
             """ Smoothness """
             # frame_yellow = cv2.medianBlur(frame_yellow, 5)
             frame_yellow = cv2.GaussianBlur(frame_yellow, (5,5), 0)
-#
+            frame_yellow_smoothed = np.copy(frame_yellow)
+
             """ Edge detection """
             frame_yellow = cv2.Canny(frame_yellow, 100, 200)
 
             """ Contour approximation """
-            # _, contour_yellow, _ = cv2.findContours(np.array(frame_yellow), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-            _, contour_yellow, _ = cv2.findContours(np.array(frame_yellow), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+            _, contour_yellow, _ = cv2.findContours(np.array(frame_yellow), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            # _, contour_yellow, _ = cv2.findContours(np.array(frame_yellow), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
             approx_contour_yellow = []
             for c in contour_yellow:
-                approx_contour_yellow.append(cv2.approxPolyDP(c, 10, closed=True))
+                epsilon_c = 0.05 * cv2.arcLength(c, True)
+                approx_contour_yellow.append(cv2.approxPolyDP(c, epsilon_c, closed=True))
 
             frame_yellow = np.zeros_like(frame_yellow)
             cv2.drawContours(frame_yellow, approx_contour_yellow, -1, (255, 255, 255), 1)
-
-
-            # ret_yellow, thresh_yellow = cv2.threshold(frame_yellow, 127, 255, 0)
-            # contours_yellow, hierarchy_yellow = cv2.findContours(thresh_yellow, 1, 2)
-            # cnt_yellow = contours_yellow[0]
-            # area_yellow = cv2.contourArea(cnt_yellow)
-            # epsilon_yellow = 0.1 * cv2.arcLength(cnt_yellow, True)
-            # approx_yellow = cv2.approxPolyDP(cnt_yellow, epsilon_yellow, True)
-
-
 
             """ Plot the bounding boxes """
             for box, i in zip(bounding_box, range(len(bounding_box))):
@@ -133,13 +132,15 @@ def main():
                     # cv2.rectangle(frame_cloned ,(xmin,ymin), (xmin+w,ymin+h), (0,165,255), 5)
                     cv2.putText(frame_cloned, 'O', (int(xmin),int(ymin)-10), cv2.FONT_HERSHEY_COMPLEX, 1, (0, 0, 0), 2, cv2.LINE_AA)
 
-            cv2.imshow('Original frame', frame)
-            cv2.waitKey(10)
+            # cv2.imshow('Original frame', frame)
+            # cv2.waitKey(10)
             # cv2.imshow('Result of cone detection', frame_cloned)
             # cv2.waitKey(10)
 
             if TESTMODE:
                 # cv2.imshow('HSV frame', frame_hsv)
+                # cv2.waitKey(10)
+                # cv2.imshow('Yellow smoothed', frame_yellow_smoothed)
                 # cv2.waitKey(10)
                 cv2.imshow('Yellow cones', frame_yellow)
                 cv2.waitKey(10)
