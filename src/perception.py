@@ -15,18 +15,19 @@ import numpy as np
 import cv2  # Ubuntu
 # from cv2 import cv2   # Windows
 
-ADD = True
-ARCAREA = True
-ARCLENGTH = True
-OPENING = True
 TESTMODE = True
 
+ADD = True
+OPENING = True
+
+ARCAREA = False
+ARCLENGTH = True
 LOWER_CORNER = 3
 UPPER_CORNER = 8
 LOWER_ARCAREA = 500
 UPPER_ARCAREA = 2500
 LOWER_ARCLENGTH = 100
-UPPER_ARCLENGTH = 250
+UPPER_ARCLENGTH = 2500
 
 KERNEL_3x3 = np.ones((3,3), np.uint8)
 KERNEL_5x5 = np.ones((5,5), np.uint8)
@@ -132,20 +133,20 @@ def main():
             for ac in approx_contour_yellow:
                 ch = cv2.convexHull(ac)
                 if ARCAREA and ARCLENGTH:
-                    if ((LOWER_CORNER <= len(ch) <= UPPER_CORNER)
+                    if ((LOWER_CORNER <= len(ch) <= UPPER_CORNER) and is_in_ratio(ch)
                         and (LOWER_ARCAREA <= cv2.contourArea(ch) <= UPPER_ARCAREA)
                         and (LOWER_ARCLENGTH <= cv2.arcLength(ch, True) <= UPPER_ARCLENGTH)):
                         convex_hull_yellow.append(ch)
                 elif ARCAREA and (not ARCLENGTH):
-                    if ((LOWER_CORNER <= len(ch) <= UPPER_CORNER)
+                    if ((LOWER_CORNER <= len(ch) <= UPPER_CORNER) and is_in_ratio(ch)
                         and (LOWER_ARCAREA <= cv2.contourArea(ch) <= UPPER_ARCAREA)):
                         convex_hull_yellow.append(ch)
                 elif (not ARCAREA) and ARCLENGTH:
-                    if ((LOWER_CORNER <= len(ch) <= UPPER_CORNER)
+                    if ((LOWER_CORNER <= len(ch) <= UPPER_CORNER) and is_in_ratio(ch)
                         and (LOWER_ARCLENGTH <= cv2.arcLength(ch, True) <= UPPER_ARCLENGTH)):
                         convex_hull_yellow.append(ch)
                 else:
-                    if (LOWER_CORNER <= len(ch) <= UPPER_CORNER):
+                    if (LOWER_CORNER <= len(ch) <= UPPER_CORNER) and is_in_ratio(ch):
                         convex_hull_yellow.append(ch)
 
             frame_yellow = np.zeros_like(frame_yellow)
@@ -187,6 +188,18 @@ def main():
                 cv2.waitKey(10)
                 cv2.imshow('Result of cone detection', frame_cloned)
                 cv2.waitKey(10)
+
+
+def is_in_ratio(cnt):
+    x,y,w,h = cv2.boundingRect(cnt)
+    aspect_ratio = float(w)/h
+    if aspect_ratio > 0.8:
+        return False
+    return True
+
+
+def is_pointing_up(cnt):
+
 
 
 if __name__ == '__main__':
