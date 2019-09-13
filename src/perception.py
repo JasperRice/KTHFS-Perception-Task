@@ -21,7 +21,7 @@ LOWER_CORNER = 3
 UPPER_CORNER = 8
 LOWER_RATIO = 0.55
 UPPER_RATIO = 0.85
-LOWER_WIDTH = 20
+LOWER_WIDTH = 15
 UPPER_WIDTH = 85
 # LOWER_HEIGHT = 30
 # UPPER_HEIGHT = 80
@@ -42,7 +42,7 @@ def main():
     upper_hsv_yellow = np.array([35, 255, 255])
 
     """ Blue """
-    lower_hsv_blue = np.array([109, 127, 31])
+    lower_hsv_blue = np.array([109, 127, 20])
     upper_hsv_blue = np.array([140, 255, 255])
 
     """ Orange """
@@ -81,7 +81,7 @@ def main():
             """ Erosion and dilation """
             # Opening
             frame_yellow = cv2.morphologyEx(frame_yellow, cv2.MORPH_OPEN, KERNEL_3x3)
-            frame_blue = cv2.morphologyEx(frame_blue, cv2.MORPH_OPEN, KERNEL_3x3)
+            frame_blue = cv2.morphologyEx(frame_blue, cv2.MORPH_OPEN, KERNEL_5x5)
             frame_orange = cv2.morphologyEx(frame_orange, cv2.MORPH_OPEN, KERNEL_3x3)
             # frame_white = cv2.morphologyEx(frame_white, cv2.MORPH_OPEN, KERNEL_3x3)
             # frame_black = cv2.morphologyEx(frame_black, cv2.MORPH_OPEN, KERNEL_3x3)
@@ -91,8 +91,8 @@ def main():
             else:
                 frame_yellow = cv2.dilate(frame_yellow, KERNEL_5x5, iterations=5)
                 frame_yellow = cv2.erode(frame_yellow, KERNEL_5x5, iterations=5)
-                frame_blue = cv2.dilate(frame_blue, KERNEL_5x5, iterations=5)
-                frame_blue = cv2.erode(frame_blue, KERNEL_5x5, iterations=5)
+                # frame_blue = cv2.dilate(frame_blue, KERNEL_5x5, iterations=1)
+                # frame_blue = cv2.erode(frame_blue, KERNEL_5x5, iterations=1)
                 frame_orange = cv2.dilate(frame_orange, KERNEL_5x5, iterations=5)
                 frame_orange = cv2.erode(frame_orange, KERNEL_5x5, iterations=5)
 
@@ -105,6 +105,8 @@ def main():
             frame_yellow = cv2.Canny(frame_yellow, 100, 200)
             frame_blue = cv2.Canny(frame_blue, 100, 200)
             frame_orange = cv2.Canny(frame_orange, 100, 200)
+
+            frame_blue_cloned = np.copy(frame_blue)
 
             """ Contour approximation """
             _, contour_yellow, _ = cv2.findContours(np.array(frame_yellow), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -164,6 +166,8 @@ def main():
             # cv2.waitKey(10)
             cv2.imshow('Result of cone detection', frame_cloned)
             cv2.waitKey(10)
+            # cv2.imshow('Blue edge', frame_blue_cloned)
+            # cv2.waitKey(10)
 
 
 def is_pointing_up(cnt, frameHeight):
