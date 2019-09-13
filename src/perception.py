@@ -15,9 +15,14 @@ import numpy as np
 import cv2  # Ubuntu
 # from cv2 import cv2   # Windows
 
+ADD = True
+ARCLENGTH = True
+OPENING = True
 TESTMODE = True
 
 def main():
+    # global ADD, ARCLENGTH, OPENING, TESTMODE
+
     cap = cv2.VideoCapture('./Videos/Video_3.mp4')
     frameCount = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     fps = int(cap.get(cv2.CAP_PROP_FPS))
@@ -31,7 +36,7 @@ def main():
     lower_hsv_blue = np.array([109, 31, 31])
     upper_hsv_blue = np.array([140, 255, 255])
 
-    # hsv_orange = np.array([19, 255, 255])MORPH_OPEN
+    # hsv_orange = np.array([19, 255, 255])
     # hsv_red = np.array([0, 255, 255])
     lower_hsv_orange_a = np.array([0, 63, 100])
     upper_hsv_orange_a = np.array([15, 255, 255])
@@ -68,7 +73,6 @@ def main():
 
             """ Erosion and dilation """
             kernel = np.ones((3,3), np.uint8)
-            OPENING = True
             if OPENING:
                 frame_yellow = cv2.morphologyEx(frame_yellow, cv2.MORPH_OPEN, kernel)
                 frame_blue = cv2.morphologyEx(frame_blue, cv2.MORPH_OPEN, kernel)
@@ -87,9 +91,15 @@ def main():
                 frame_black = cv2.erode(frame_black, kernel, iterations=2)
                 frame_black = cv2.dilate(frame_black, kernel, iterations=2)
 
-            # frame_yellow = cv2.dilate(frame_yellow, kernel, iterations=5)
-            # frame_yellow = cv2.erode(frame_yellow, kernel, iterations=5)
-            frame_yellow = cv2.add(frame_yellow, frame_black)
+            if ADD:
+                frame_yellow = cv2.add(frame_yellow, frame_black)
+            else:
+                frame_yellow = cv2.dilate(frame_yellow, kernel, iterations=5)
+                frame_yellow = cv2.erode(frame_yellow, kernel, iterations=5)
+                frame_blue = cv2.dilate(frame_blue, kernel, iterations=5)
+                frame_blue = cv2.erode(frame_blue, kernel, iterations=5)
+                frame_orange = cv2.dilate(frame_orange, kernel, iterations=5)
+                frame_orange = cv2.erode(frame_orange, kernel, iterations=5)
 
             """ Smoothness """
             # frame_yellow = cv2.medianBlur(frame_yellow, 5)
@@ -107,8 +117,21 @@ def main():
                 epsilon_c = 0.05 * cv2.arcLength(c, True)
                 approx_contour_yellow.append(cv2.approxPolyDP(c, epsilon_c, closed=True))
 
+            """ Convex hull """
+            convex_hull_yellow = []
+            if ARCLENGTH:
+                for ac in approx_contour_yellow:
+                    ch = cv2.convexHull(ac)
+                    if (3 <= len(ch) <= 8) and (125 <= cv2.arcLength(ch, True) <= 250):
+                        convex_hull_yellow.append(ch)
+            else:
+                for ac in approx_contour_yellow:
+                    ch = cv2.convexHull(ac)
+                    if 3 <= len(ch) <= 8:
+                        convex_hull_yellow.append(ch)
+
             frame_yellow = np.zeros_like(frame_yellow)
-            cv2.drawContours(frame_yellow, approx_contour_yellow, -1, (255, 255, 255), 1)
+            cv2.drawContours(frame_yellow, convex_hull_yellow, -1, (255, 255, 255), 1)
 
             """ Plot the bounding boxes """
             for box, i in zip(bounding_box, range(len(bounding_box))):
